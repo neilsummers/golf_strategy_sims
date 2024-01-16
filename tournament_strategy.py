@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     x = np.arange(0., 10.1, 0.1)
 
-    fig = plt.figure(figsize=(6.4, 6.4*1))
+    fig = plt.figure(figsize=(4.2, 4.2))
     ax1 = fig.add_subplot(1, 1, 1)
     step = 0.2
     baseline = Baseline()
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     ax1.set_xlim([x.min(), x.max()])
     ax1.set_xlabel('target (yards)')
     ax1.set_ylabel('∫ P(x|target)*SG(x) dx')
-    ax1.set_title('Strokes gained averaged over shot distribution for a given target')
+    ax1.set_title('Expected Strokes From for a Given Target')
     fig.tight_layout()
     fig.savefig('optimal_target.jpeg')
 
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     summary = pd.concat([wins, top3, top10, top25, cuts_made], axis=1).sort_index().fillna(0).astype(int).join(players)
 
     print(total_prize_money.groupby('target').sum()['prize_money'])
-    fig = plt.figure(figsize=(6.4, 6.4))
+    fig = plt.figure(figsize=(4.2, 4.2))
     ax2 = total_prize_money.groupby('target').sum()['prize_money'].plot()
     ax2.set_xlim([0, 10])
     ax2.set_xlabel('target (yards)')
@@ -153,21 +153,24 @@ if __name__ == '__main__':
 
     print(summary.groupby('target').sum()[['wins', 'top 3', 'top 10', 'top 25', 'cuts made']])
     print(summary.groupby('target').sum()[['wins', 'top 3', 'top 10', 'top 25', 'cuts made']].to_markdown())
-    ax3s = summary.groupby('target').sum()[['wins', 'top 3', 'top 10', 'top 25', 'cuts made']].plot(subplots=True, sharex=True, figsize=(6.4, 6.4*2))
+    ax3s = summary.groupby('target').sum()[['wins', 'top 3', 'top 10', 'top 25', 'cuts made']].plot(subplots=True, sharex=True, figsize=(5.5, 8))
     ax3 = ax3s[0]
     fig = ax3.get_figure()
     fig.subplots_adjust(wspace=0, hspace=0)
     ax3.set_xlim([0, 10])
     ax3s[-1].set_xlabel('target (yards)')
-    ax3.set_title('Number of placed finishes per target')
+    ax3.set_title('Number of Placed Finishes')
     fig.tight_layout()
     fig.savefig('places.jpeg')
 
-    fig = plt.figure(figsize=(8.5, 6))
+    baseline = Baseline()
+    step = 0.2
+    fig = plt.figure(figsize=(5.5, 6))
+    ax, ax2 = fig.subplots(2, 1, sharex=True)
+    fig.subplots_adjust(wspace=0, hspace=0)
     z = np.arange(-10, 30+step, step)
     y0 = sp.stats.norm(loc=0, scale=std).pdf(z)
     y5 = sp.stats.norm(loc=4.6, scale=std).pdf(z)
-    ax = fig.add_subplot()
     ax.plot(z, y0, '--', color='b', label='aim at pin')
     ax.plot(z, y5, '--', color='orange', label='aim at optimal target')
     ax.legend()
@@ -177,7 +180,7 @@ if __name__ == '__main__':
     ax.plot([-5, -5], [0, 0.015], '-', color='g')
     ax.plot([24, 24], [0, 0.015], '-', color='g')
     ax.plot([25, 25], [0, 0.015], '-', color='g')
-    ax.set_xlabel('distance from pin (yards)')
+    #ax.set_xlabel('distance from pin (yards)')
     ax.set_ylabel('Probability')
     ax.plot([0, 0], [0, sp.stats.norm(loc=0, scale=std).pdf(0)], 'b--')
     ax.plot([4.6, 4.6], [0, sp.stats.norm(loc=4.6, scale=std).pdf(4.6)], '--', color='orange')
@@ -188,5 +191,19 @@ if __name__ == '__main__':
     ax.text(24, 0.01, 'FAIRWAY', rotation='vertical', color='g', fontsize='small')
     ax.text(25, 0.01, 'ROUGH', rotation='vertical', color='g', fontsize='small')
     ax.set_title('Shot Distributions and Target Description')
+    sf = np.array([baseline.strokes_from(generate_lie(z_), abs(z_)) for z_ in z])
+    ax2.plot(z, sf, 'k')
+    ax2.set_xlabel('distance from pin (yards)')
+    ax2.set_ylabel('Strokes From (SF)')
+    ax2.set_ylim([0.9, 2.8])
+    ax2.plot([-6, -6], [1, 2.8], '-', color='y', alpha=0.5)
+    ax2.plot([-5, -5], [1, 2.8], '-', color='g', alpha=0.5)
+    ax2.plot([24, 24], [1, 2.8], '-', color='g', alpha=0.5)
+    ax2.plot([25, 25], [1, 2.8], '-', color='g', alpha=0.5)
+    ax2.plot([0, 0], [1, 2.8], 'k--')
+    #ax.tick_params(labelbottom=False, labeltop=False, labelleft=True, labelright=False,
+    #               bottom=False, top=False, left=True, right=False)
+    #ax2.tick_params(labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+    #                bottom=True, top=True, left=True, right=False)
     fig.tight_layout()
     fig.savefig('approach.jpeg')
